@@ -1,0 +1,277 @@
+/* 塞尔达传说：旷野之息 主题 */
+:root {
+  --botw-bg: #e8dcc8;
+  --botw-bg-dark: #d4c9b0;
+  --botw-card: #5c5346;
+  --botw-card-hover: #6b6154;
+  --botw-card-light: #f5f0e6;
+  --botw-card-light-hover: #ede8dc;
+  --botw-text: #f5f0e6;
+  --botw-text-dark: #3d3529;
+  --botw-text-muted: #a89b85;
+  --botw-gold: #c9a84c;
+  --botw-gold-light: #e8d5a3;
+  --botw-gold-dark: #a0853a;
+  --botw-nav: #3d3529;
+  --botw-nav-hover: #4a4235;
+  --botw-green: #5a9e6e;
+  --botw-orange: #c9a84c;
+  --botw-red: #c45c4a;
+  --botw-border: #7a6f5e;
+  --botw-blue: #3498f6;
+  --botw-shadow: rgba(61, 53, 41, 0.25);
+
+  font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--botw-text-dark);
+  background: var(--botw-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--botw-bg);
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--botw-bg);
+}
+
+/* Ant Design 主题覆盖 */
+.ant-layout {
+  background: var(--botw-bg) !important;
+}
+
+.ant-layout-content {
+  background: var(--botw-bg) !important;
+}
+
+.ant-card {
+  background: var(--botw-card-light);
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px var(--botw-shadow);
+}
+
+.ant-card-head {
+  border-bottom: 1px solid rgba(122, 111, 94, 0.2);
+  color: var(--botw-text-dark);
+  font-weight: 600;
+}
+
+.ant-input,
+.ant-input-affix-wrapper {
+  background: var(--botw-card);
+  border: 1px solid var(--botw-border);
+  border-radius: 24px;
+  color: var(--botw-text);
+}
+
+.ant-input::placeholder,
+.ant-input-affix-wrapper input::placeholder {
+  color: var(--botw-text-muted);
+}
+
+.ant-input:focus,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+  border-color: var(--botw-gold);
+  box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.2);
+}
+
+.ant-btn-primary {
+  background: var(--botw-card);
+  border: 2px solid var(--botw-gold);
+  color: var(--botw-gold);
+  border-radius: 24px;
+  font-weight: 600;
+}
+
+.ant-btn-primary:hover {
+  background: var(--botw-gold) !important;
+  border-color: var(--botw-gold) !important;
+  color: var(--botw-text) !important;
+}
+
+.ant-btn-default {
+  background: var(--botw-card);
+  border: 1px solid var(--botw-border);
+  color: var(--botw-text);
+  border-radius: 24px;
+}
+
+.ant-btn-default:hover {
+  border-color: var(--botw-gold) !important;
+  color: var(--botw-gold) !important;
+}
+
+.ant-switch-checked {
+  background-color: var(--botw-card) !important;
+}
+
+.ant-select-selector {
+  background: var(--botw-card) !important;
+  border: 1px solid var(--botw-border) !important;
+  border-radius: 24px !important;
+  color: var(--botw-text) !important;
+}
+
+.ant-select-dropdown {
+  background: var(--botw-card) !important;
+  border-radius: 12px !important;
+}
+
+.ant-select-item {
+  color: var(--botw-text) !important;
+}
+
+.ant-select-item-option-selected {
+  background: rgba(201, 168, 76, 0.3) !important;
+}
+
+.ant-select-item-option-active {
+  background: rgba(201, 168, 76, 0.15) !important;
+}
+
+.ant-picker {
+  background: var(--botw-card) !important;
+  border: 1px solid var(--botw-border) !important;
+  border-radius: 24px !important;
+  color: var(--botw-text) !important;
+}
+
+.ant-picker-dropdown {
+  background: var(--botw-card) !important;
+}
+
+.ant-picker-cell-in-view {
+  color: var(--botw-text) !important;
+}
+
+.ant-picker-header {
+  color: var(--botw-gold) !important;
+  border-bottom: 1px solid var(--botw-border);
+}
+
+.ant-picker-header-view button:hover {
+  color: var(--botw-gold-light);
+}
+
+.ant-picker-today-btn {
+  color: var(--botw-gold) !important;
+}
+
+.ant-tag {
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 13px;
+}
+
+.ant-modal-content,
+.ant-modal-header {
+  background: var(--botw-card-light);
+  color: var(--botw-text-dark);
+}
+
+.ant-modal-title {
+  color: var(--botw-text-dark);
+}
+
+.ant-form-item-label>label {
+  color: var(--botw-text-dark);
+}
+
+.ant-table {
+  background: var(--botw-card-light);
+  color: var(--botw-text-dark);
+}
+
+.ant-table-thead>tr>th {
+  background: var(--botw-card);
+  color: var(--botw-text);
+  border-bottom: 1px solid var(--botw-border);
+}
+
+.ant-table-tbody>tr>td {
+  border-bottom: 1px solid rgba(122, 111, 94, 0.15);
+}
+
+.ant-table-tbody>tr:hover>td {
+  background: rgba(201, 168, 76, 0.08) !important;
+}
+
+.ant-tabs-tab {
+  color: var(--botw-text-muted);
+}
+
+.ant-tabs-tab-active {
+  color: var(--botw-gold) !important;
+}
+
+.ant-tabs-ink-bar {
+  background: var(--botw-gold) !important;
+}
+
+.ant-menu {
+  background: var(--botw-nav);
+  border: none;
+}
+
+.ant-menu-item {
+  color: var(--botw-text-muted);
+}
+
+.ant-menu-item-selected {
+  background: transparent !important;
+  color: var(--botw-gold) !important;
+}
+
+.ant-menu-item-selected::after {
+  border-bottom: 2px solid var(--botw-gold) !important;
+}
+
+.ant-empty-description {
+  color: var(--botw-text-muted);
+}
+
+.ant-message-notice-content {
+  background: var(--botw-card);
+  color: var(--botw-text);
+  border-radius: 12px;
+}
+
+.ant-spin-dot-item {
+  background: var(--botw-gold);
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--botw-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--botw-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--botw-gold);
+}
