@@ -25,8 +25,8 @@ async function bootstrap() {
     prefix: '/uploads',
   });
 
-  await app.listen(3001, '0.0.0.0');
-  console.log('Server running on http://localhost:3001');
-  console.log('LAN access: http://192.168.50.51:3001');
+  await app.listen(3002, '0.0.0.0');
+  console.log('Server running on http://localhost:3002');
+  console.log('LAN access: http://192.168.50.51:3002');
 }
 bootstrap();

@@ -1,5 +1,6 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Layout, Dropdown, Avatar, message } from 'antd';
+import type { MenuProps } from 'antd';
 import {
   HomeOutlined,
   AppstoreOutlined,
@@ -13,7 +14,7 @@ import {
 import { useStore } from '../store';
 import { useEffect } from 'react';
 import { api } from '../api';
-
+import zeldaImg from '../assets/zelda.webp'
 const { Content } = Layout;
 
 const tabs = [
@@ -41,10 +42,10 @@ export default function MainLayout() {
     navigate('/login');
   };
 
-  const userMenuItems = [
+  const userMenuItems: MenuProps['items'] = [
     { key: 'email', label: user?.email || '', disabled: true },
-    { key: 'changePwd', label: '修改密码', icon: <EditOutlined />, },
-    { type: 'divider', },
+    { key: 'changePwd', label: '修改密码', icon: <EditOutlined /> },
+    { type: 'divider' },
     { key: 'logout', label: '退出登录', icon: <LogoutOutlined />, danger: true },
   ];
 
@@ -86,7 +87,7 @@ export default function MainLayout() {
                 fontSize: 20,
               }}
             >
-              <img src="/src/assets/zelda.webp" alt="zelda" style={{ width: 45, height: 45, objectFit: 'contain' }} />
+              <img src={zeldaImg} alt="zelda" style={{ width: 45, height: 45, objectFit: 'contain' }} />
             </div>
             <div>
               <div
@@ -107,7 +108,7 @@ export default function MainLayout() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div
+            {/* <div
               style={{
                 padding: '4px 14px',
                 background: 'var(--botw-nav)',
@@ -118,12 +119,16 @@ export default function MainLayout() {
               }}
             >
               古代遗物 | 三角之力
-            </div>
+            </div> */}
             <Dropdown
               menu={{
-                items: userMenuItems,
+                items: userMenuItems as MenuProps['items'],
                 onClick: ({ key }) => {
                   if (key === 'logout') handleLogout();
+                  if (key === 'changePwd') {
+                    // TODO: 实现修改密码功能
+                    message.info('修改密码功能待实现');
+                  }
                 },
               }}
               placement="bottomRight"

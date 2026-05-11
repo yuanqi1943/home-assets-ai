@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input, Tag, Badge, Spin, message, Empty } from 'antd';
+import { Input, Badge, Spin, message, Empty } from 'antd';
 import {
   SearchOutlined,
   SettingOutlined,

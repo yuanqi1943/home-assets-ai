@@ -7,6 +7,7 @@ import {
   EditOutlined, DeleteOutlined, PlusOutlined,
 } from '@ant-design/icons';
 import { api } from '../api';
+import dayjs from 'dayjs';
 
 interface Item {
   id: number;
@@ -154,13 +155,13 @@ export default function ItemsPage() {
       title: '购入日期',
       dataIndex: 'purchase_date',
       key: 'purchase_date',
-      render: (v: string) => v || '-',
+      render: (v: string) => dayjs(v).format('YYYY-MM-DD') || '-',
     },
     {
       title: '标签',
       key: 'tags',
       render: (_: any, record: Item) =>
-        record.tags?.map((t) => <Tag key={t.id} size="small">{t.name}</Tag>),
+        record.tags?.map((t) => <Tag key={t.id}>{t.name}</Tag>),
     },
     {
       title: '操作',

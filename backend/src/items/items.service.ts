@@ -4,6 +4,8 @@ import { Repository, Like, In, Between } from 'typeorm';
 import { Item } from '../entities/item.entity';
 import { ItemTag } from '../entities/item-tag.entity';
 import { Tag } from '../entities/tag.entity';
+import * as fs from 'fs';
+import { join } from 'path';
 
 export interface ItemFilter {
   search?: string;
@@ -102,6 +104,8 @@ export class ItemsService {
     const item = await this.itemRepo.findOne({ where: { id, user_id: userId } });
     if (!item) throw new NotFoundException('Item not found');
 
+    const oldImageUrl = item.image_url;
+
     Object.assign(item, {
       name: dto.name ?? item.name,
       category_id: dto.category_id ?? item.category_id,
@@ -117,6 +121,10 @@ export class ItemsService {
 
     await this.itemRepo.save(item);
 
+    if (imageUrl && oldImageUrl && oldImageUrl !== imageUrl) {
+      this.deleteImageFile(oldImageUrl);
+    }
+
     if (dto.tag_ids !== undefined) {
       await this.itemTagRepo.delete({ item_id: id });
       if (dto.tag_ids.length > 0) {
@@ -131,14 +139,31 @@ export class ItemsService {
     return this.findOne(userId, id);
   }
 
+  private deleteImageFile(imageUrl?: string | null) {
+    if (!imageUrl) return;
+    const filename = imageUrl.replace('/uploads/', '');
+    const filepath = join(process.cwd(), 'uploads', filename);
+    if (fs.existsSync(filepath)) {
+      fs.unlinkSync(filepath);
+    }
+  }
+
   async remove(userId: number, id: number) {
     const item = await this.itemRepo.findOne({ where: { id, user_id: userId } });
     if (!item) throw new NotFoundException('Item not found');
+    this.deleteImageFile(item.image_url);
     await this.itemRepo.remove(item);
     return { success: true };
   }
 
   async batchDelete(userId: number, ids: number[]) {
+    const items = await this.itemRepo.find({
+      where: { user_id: userId, id: In(ids) },
+      select: ['image_url'],
+    });
+    for (const item of items) {
+      this.deleteImageFile(item.image_url);
+    }
     await this.itemRepo.delete({ user_id: userId, id: In(ids) });
     return { success: true };
   }

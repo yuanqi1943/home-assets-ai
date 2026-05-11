@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Form, Input, Select, DatePicker, InputNumber, Button, Upload, message, Card, Spin,
+  Form, Input, Select, DatePicker, InputNumber, Button, Upload, message, Spin,
 } from 'antd';
-import { UploadOutlined, ScanOutlined, CameraOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { UploadOutlined, ScanOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { api } from '../api';
 import dayjs from 'dayjs';
 
@@ -48,23 +48,97 @@ export default function ItemFormPage() {
     }
   }, [id, form]);
 
-  const handleImageChange = (info: any) => {
+  const compressImage = async (file: File, maxSizeKB = 200): Promise<File> => {
+    const maxBytes = maxSizeKB * 1024;
+    if (file.size <= maxBytes) return file;
+
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let { width, height } = img;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('无法创建 canvas 上下文'));
+          return;
+        }
+
+        const tryCompress = (quality: number) => {
+          canvas.width = width;
+          canvas.height = height;
+          ctx.clearRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error('图片压缩失败'));
+                return;
+              }
+              if (blob.size <= maxBytes || quality <= 0.1) {
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              } else {
+                // 降低质量重试
+                tryCompress(quality - 0.1);
+              }
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+
+        // 如果尺寸过大，先等比缩小
+        const maxDimension = 1920;
+        if (width > maxDimension || height > maxDimension) {
+          const ratio = Math.min(maxDimension / width, maxDimension / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        tryCompress(0.9);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error('图片加载失败'));
+      };
+      img.src = url;
+    });
+  };
+
+  const handleImageChange = async (info: any) => {
     if (info.fileList.length > 0) {
-      const file = info.fileList[0].originFileObj as File;
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      const rawFile = info.fileList[0].originFileObj as File;
+      try {
+        const file = await compressImage(rawFile, 200);
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+      } catch {
+        message.error('图片压缩失败');
+        setImageFile(null);
+        setImagePreview(null);
+      }
     } else {
       setImageFile(null);
       setImagePreview(null);
     }
   };
 
-  const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
-    message.success('拍照成功');
+  const handleCameraCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
+    try {
+      const file = await compressImage(rawFile, 200);
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+      message.success('拍照成功');
+    } catch {
+      message.error('图片压缩失败');
+    }
     e.target.value = '';
   };
 
@@ -84,6 +158,7 @@ export default function ItemFormPage() {
         name: data.name || form.getFieldValue('name'),
         category_id: data.categoryId || form.getFieldValue('category_id'),
         description: data.description || form.getFieldValue('description'),
+        price: data.price ?? form.getFieldValue('price'),
       });
       message.success('AI 识别成功');
     } catch {
@@ -245,6 +320,7 @@ export default function ItemFormPage() {
             <Form.Item
               name="purchase_date"
               label={<span style={{ color: 'var(--botw-text)' }}>购入日期</span>}
+              initialValue={dayjs()}
             >
               <DatePicker style={{ width: '100%' }} />
             </Form.Item>
@@ -267,6 +343,7 @@ export default function ItemFormPage() {
             <Form.Item
               name="source"
               label={<span style={{ color: 'var(--botw-text)' }}>来源</span>}
+              initialValue="淘宝"
             >
               <Input placeholder="如：哈特诺古代研究所、卡卡利科村" />
             </Form.Item>

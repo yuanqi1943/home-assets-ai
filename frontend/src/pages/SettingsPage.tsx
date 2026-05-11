@@ -6,7 +6,7 @@ import {
   ExportOutlined, PlusOutlined, EditOutlined, DeleteOutlined,
 } from '@ant-design/icons';
 import { api } from '../api';
-import { useStore } from '../store';
+// import { useStore } from '../store';
 
 interface Category {
   id: number;
@@ -22,7 +22,7 @@ interface TagType {
 }
 
 export default function SettingsPage() {
-  const { user, logout } = useStore();
+  // const { user, logout } = useStore();
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<TagType[]>([]);
   const [catModalVisible, setCatModalVisible] = useState(false);

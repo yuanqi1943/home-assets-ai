@@ -21,17 +21,19 @@ export class AiService {
     });
     const categoryNames = categories.map((c) => c.name).join(', ');
 
-    const prompt = `You are an expert at identifying household items from images. Please analyze this image and return ONLY a valid JSON object with no markdown formatting, no code blocks, just raw JSON. The JSON must have these exact keys:
+      const prompt = `You are an expert at identifying household items from images. Please analyze this image and return ONLY a valid JSON object with no markdown formatting, no code blocks, just raw JSON. The JSON must have these exact keys:
 {
   "name": "The common Chinese name of the item (keep it concise, under 10 characters)",
   "categoryName": "The most appropriate category from these options: ${categoryNames}. If none match well, suggest a new concise Chinese category name.",
-  "description": "A brief Chinese description of the item (under 100 characters) including brand/model if visible, color, and key features."
+  "description": "A brief Chinese description of the item (under 100 characters) including brand/model if visible, color, and key features.",
+  "price": "Estimated price in Chinese Yuan (CNY). Return a number only, no currency symbol. If you cannot estimate, return 0."
 }
 
 Rules:
 1. Return ONLY the JSON object, nothing else.
 2. Do not wrap in markdown code blocks.
-3. Ensure valid JSON syntax with double quotes.`;
+3. Ensure valid JSON syntax with double quotes.
+4. Price must be a number, not a string.`;
     const dataUrl = `data:${mimeType};base64,${imageBase64}`;
     const requestBody = {
       model: QWEN_MODEL,
@@ -74,6 +76,7 @@ Rules:
         categoryName: matchedCategory?.name || result.categoryName || '其他',
         categoryId: matchedCategory?.id || null,
         description: result.description || '',
+        price: Number(result.price) || 0,
       };
     } catch (err: any) {
       return {
