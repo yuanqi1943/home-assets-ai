@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Table, Button, Popconfirm, message, Checkbox, Modal, Select, Tag, Space,
+  Table, Button, Popconfirm, message, Space, Modal, Tag, Image,
 } from 'antd';
 import {
   EditOutlined, DeleteOutlined, PlusOutlined,
@@ -14,34 +14,25 @@ interface Item {
   name: string;
   price: number;
   status: string;
+  source: string;
   purchase_date: string;
+  expiry_date: string;
+  location: string;
+  description: string;
+  image_url: string;
   category: { name: string };
   tags: { id: number; name: string }[];
-  image_url: string;
-}
-
-interface Category {
-  id: number;
-  name: string;
-}
-
-interface TagType {
-  id: number;
-  name: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function ItemsPage() {
   const navigate = useNavigate();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tags, setTags] = useState<TagType[]>([]);
-  const [batchCategoryVisible, setBatchCategoryVisible] = useState(false);
-  const [batchTagsVisible, setBatchTagsVisible] = useState(false);
-  const [batchCategoryId, setBatchCategoryId] = useState<number | null>(null);
-  const [batchTagIds, setBatchTagIds] = useState<number[]>([]);
+  const [detailVisible, setDetailVisible] = useState(false);
+  const [detailItem, setDetailItem] = useState<Item | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -57,23 +48,7 @@ export default function ItemsPage() {
 
   useEffect(() => {
     fetchItems();
-    api.get('/categories').then((res) => setCategories(res.data));
-    api.get('/tags').then((res) => setTags(res.data));
   }, []);
-
-  const toggleSelect = (id: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === items.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(items.map((i) => i.id));
-    }
-  };
 
   const handleDelete = async (id: number) => {
     try {
@@ -85,87 +60,42 @@ export default function ItemsPage() {
     }
   };
 
-  const handleBatchDelete = async () => {
+  const openDetail = async (id: number) => {
+    setDetailLoading(true);
     try {
-      await api.delete('/items/batch', { data: { ids: selectedIds } });
-      message.success('批量删除成功');
-      setSelectedIds([]);
-      setEditMode(false);
-      fetchItems();
+      const { data } = await api.get(`/items/${id}`);
+      setDetailItem(data);
+      setDetailVisible(true);
     } catch {
-      message.error('批量删除失败');
-    }
-  };
-
-  const handleBatchCategory = async () => {
-    if (!batchCategoryId) return;
-    try {
-      await api.put('/items/batch/category', { ids: selectedIds, categoryId: batchCategoryId });
-      message.success('修改分类成功');
-      setBatchCategoryVisible(false);
-      setSelectedIds([]);
-      setEditMode(false);
-      fetchItems();
-    } catch {
-      message.error('修改分类失败');
-    }
-  };
-
-  const handleBatchTags = async () => {
-    try {
-      await api.put('/items/batch/tags', { ids: selectedIds, tagIds: batchTagIds });
-      message.success('修改标签成功');
-      setBatchTagsVisible(false);
-      setSelectedIds([]);
-      setEditMode(false);
-      fetchItems();
-    } catch {
-      message.error('修改标签失败');
+      message.error('加载详情失败');
+    } finally {
+      setDetailLoading(false);
     }
   };
 
   const columns = [
     {
-      title: editMode ? (
-        <Checkbox
-          checked={selectedIds.length === items.length && items.length > 0}
-          indeterminate={selectedIds.length > 0 && selectedIds.length < items.length}
-          onChange={toggleSelectAll}
-        />
-      ) : '',
-      key: 'select',
-      width: 50,
-      render: (_: any, record: Item) =>
-        editMode ? (
-          <Checkbox
-            checked={selectedIds.includes(record.id)}
-            onChange={() => toggleSelect(record.id)}
-          />
-        ) : null,
+      title: '名称',
+      dataIndex: 'name',
+      key: 'name',
+      render: (v: string, record: Item) => (
+        <Button type="link" onClick={() => openDetail(record.id)} style={{ padding: 0 }}>
+          {v}
+        </Button>
+      ),
     },
-    { title: '名称', dataIndex: 'name', key: 'name' },
-    {
-      title: '分类',
-      key: 'category',
-      render: (_: any, record: Item) => record.category?.name || '-',
-    },
-    { title: '价格', dataIndex: 'price', key: 'price', render: (v: number) => `¥${v}` },
-    { title: '状态', dataIndex: 'status', key: 'status' },
+    { title: '价格', dataIndex: 'price', key: 'price', sorter: (a: Item, b: Item) => a.price - b.price, render: (v: number) => `¥${v}` },
     {
       title: '购入日期',
       dataIndex: 'purchase_date',
       key: 'purchase_date',
+      sorter: (a: Item, b: Item) => dayjs(a.purchase_date).valueOf() - dayjs(b.purchase_date).valueOf(),
       render: (v: string) => dayjs(v).format('YYYY-MM-DD') || '-',
-    },
-    {
-      title: '标签',
-      key: 'tags',
-      render: (_: any, record: Item) =>
-        record.tags?.map((t) => <Tag key={t.id}>{t.name}</Tag>),
     },
     {
       title: '操作',
       key: 'action',
+      width: 80,
       render: (_: any, record: Item) => (
         <Space>
           <Button
@@ -190,9 +120,6 @@ export default function ItemsPage() {
         <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/items/new')}>
           新增物品
         </Button>
-        <Button onClick={() => { setEditMode(!editMode); setSelectedIds([]); }}>
-          {editMode ? '取消' : '编辑'}
-        </Button>
       </div>
 
       <Table
@@ -204,58 +131,84 @@ export default function ItemsPage() {
         size="small"
       />
 
-      {editMode && selectedIds.length > 0 && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 60,
-            left: 0,
-            right: 0,
-            background: '#fff',
-            padding: 12,
-            display: 'flex',
-            gap: 12,
-            justifyContent: 'center',
-            boxShadow: '0 -2px 8px rgba(0,0,0,0.1)',
-            zIndex: 20,
-          }}
-        >
-          <span style={{ alignSelf: 'center', marginRight: 8 }}>
-            已选 {selectedIds.length} 项
-          </span>
-          <Button danger onClick={handleBatchDelete}>删除选中</Button>
-          <Button onClick={() => setBatchCategoryVisible(true)}>修改分类</Button>
-          <Button onClick={() => setBatchTagsVisible(true)}>修改标签</Button>
-        </div>
-      )}
-
       <Modal
-        open={batchCategoryVisible}
-        title="批量修改分类"
-        onOk={handleBatchCategory}
-        onCancel={() => setBatchCategoryVisible(false)}
+        open={detailVisible}
+        title={null}
+        onCancel={() => setDetailVisible(false)}
+        footer={null}
+        width={520}
+        loading={detailLoading}
+        centered
       >
-        <Select
-          style={{ width: '100%' }}
-          placeholder="选择分类"
-          options={categories.map((c) => ({ value: c.id, label: c.name }))}
-          onChange={(v) => setBatchCategoryId(v)}
-        />
-      </Modal>
-
-      <Modal
-        open={batchTagsVisible}
-        title="批量修改标签"
-        onOk={handleBatchTags}
-        onCancel={() => setBatchTagsVisible(false)}
-      >
-        <Select
-          mode="multiple"
-          style={{ width: '100%' }}
-          placeholder="选择标签"
-          options={tags.map((t) => ({ value: t.id, label: t.name }))}
-          onChange={(v) => setBatchTagIds(v)}
-        />
+        {detailItem && (
+          <div style={{ maxWidth: 480, margin: '0 auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 16, alignItems: 'start' }}>
+              {detailItem.image_url && (
+                <Image
+                  src={detailItem.image_url}
+                  alt={detailItem.name}
+                  style={{
+                    width: '100%',
+                    aspectRatio: '1 / 1',
+                    objectFit: 'cover',
+                    borderRadius: 12,
+                  }}
+                />
+              )}
+              <div style={{ display: 'grid', gap: 8 }}>
+                <div style={{ fontWeight: 'bold', fontSize: 16 }}>{detailItem.name}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px' }}>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>分类</span>
+                    <div style={{ fontSize: 13 }}>{detailItem.category?.name || '-'}</div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>价格</span>
+                    <div style={{ fontSize: 13, color: 'var(--botw-gold)', fontWeight: 'bold' }}>
+                      ¥{detailItem.price?.toLocaleString()}
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>状态</span>
+                    <div style={{ fontSize: 13 }}>{detailItem.status}</div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>来源</span>
+                    <div style={{ fontSize: 13 }}>{detailItem.source || '-'}</div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>购入日期</span>
+                    <div style={{ fontSize: 13 }}>{detailItem.purchase_date ? dayjs(detailItem.purchase_date).format('YYYY-MM-DD') : '-'}</div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>过期日期</span>
+                    <div style={{ fontSize: 13 }}>{detailItem.expiry_date ? dayjs(detailItem.expiry_date).format('YYYY-MM-DD') : '-'}</div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>位置</span>
+                    <div style={{ fontSize: 13 }}>{detailItem.location || '-'}</div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>标签</span>
+                    <div style={{ fontSize: 13 }}>
+                      {detailItem.tags?.length
+                        ? detailItem.tags.map((t) => <Tag key={t.id} style={{ fontSize: 11, padding: '0 6px', margin: 0 }}>{t.name}</Tag>)
+                        : '-'}
+                    </div>
+                  </div>
+                </div>
+                {detailItem.description && (
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>描述</span>
+                    <div style={{ marginTop: 2, padding: 6, background: 'var(--botw-bg)', borderRadius: 6, fontSize: 12 }}>
+                      {detailItem.description}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

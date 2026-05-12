@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input, Badge, Spin, message, Empty } from 'antd';
+import { Input, Badge, Spin, message, Empty, Modal, Image, Tag } from 'antd';
 import {
   SearchOutlined,
   SettingOutlined,
@@ -29,6 +29,7 @@ interface Item {
   purchase_date: string;
   expiry_date: string;
   location: string;
+  description: string;
   image_url: string;
   category: { name: string };
   tags: { id: number; name: string }[];
@@ -44,6 +45,9 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [detailVisible, setDetailVisible] = useState(false);
+  const [detailItem, setDetailItem] = useState<Item | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const fetchItems = useCallback(async (p = 1, catId?: number | null, q?: string) => {
     setLoading(true);
@@ -79,21 +83,17 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, [search, selectedCategory, fetchItems]);
 
-  const statusConfig: Record<string, { color: string; bg: string; icon: string }> = {
-    '全新': { color: 'var(--botw-green)', bg: 'rgba(90, 158, 110, 0.15)', icon: '🌿' },
-    '中古': { color: 'var(--botw-orange)', bg: 'rgba(201, 168, 76, 0.15)', icon: '⚔️' },
-    '待维护': { color: 'var(--botw-red)', bg: 'rgba(196, 92, 74, 0.15)', icon: '🔧' },
-  };
-
-  const isExpired = (date?: string) => {
-    if (!date) return false;
-    return dayjs(date).isBefore(dayjs(), 'day');
-  };
-
-  const isNearExpiry = (date?: string) => {
-    if (!date) return false;
-    const d = dayjs(date);
-    return d.isAfter(dayjs(), 'day') && d.diff(dayjs(), 'day') <= 30;
+  const openDetail = async (id: number) => {
+    setDetailLoading(true);
+    try {
+      const { data } = await api.get(`/items/${id}`);
+      setDetailItem(data);
+      setDetailVisible(true);
+    } catch {
+      message.error('加载详情失败');
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   return (
@@ -416,16 +416,16 @@ export default function HomePage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gridTemplateColumns: 'repeat(4, 1fr)',
           gap: 10,
         }}
+        className="home-item-grid"
       >
         {items.map((item) => {
-          const status = statusConfig[item.status] || statusConfig['全新'];
           return (
             <div
               key={item.id}
-              onClick={() => navigate(`/items/${item.id}/edit`)}
+              onClick={() => openDetail(item.id)}
               style={{
                 background: 'var(--botw-card-light)',
                 borderRadius: '16px',
@@ -448,7 +448,7 @@ export default function HomePage() {
                     src={item.image_url}
                     style={{
                       width: '100%',
-                      height: 120,
+                      aspectRatio: '1 / 1',
                       objectFit: 'cover',
                       display: 'block',
                     }}
@@ -469,99 +469,6 @@ export default function HomePage() {
                   </div>
                 </div>
               )}
-              <div style={{ padding: '10px 12px' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    marginBottom: 6,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontWeight: 'bold',
-                      color: 'var(--botw-text-dark)',
-                      fontSize: 14,
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    {item.name}
-                  </span>
-                </div>
-
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: 6,
-                  }}
-                >
-                  <span
-                    style={{
-                      color: 'var(--botw-gold)',
-                      fontSize: 16,
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    ¥ {item.price?.toLocaleString()}
-                  </span>
-                  <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>
-                    📅 {dayjs(item.purchase_date).format('YYYY-MM-DD')}
-                  </span>
-                </div>
-
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: '2px 8px',
-                      borderRadius: '8px',
-                      fontSize: 11,
-                      background: status.bg,
-                      color: status.color,
-                    }}
-                  >
-                    <span>{status.icon}</span>
-                    {item.status}
-                  </div>
-                  {item.source && (
-                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 10 }}>
-                      🏛️ {item.source}
-                    </span>
-                  )}
-                </div>
-
-                {item.expiry_date && (
-                  <div
-                    style={{
-                      marginTop: 6,
-                      fontSize: 10,
-                      color: isExpired(item.expiry_date)
-                        ? 'var(--botw-red)'
-                        : isNearExpiry(item.expiry_date)
-                          ? 'var(--botw-orange)'
-                          : 'var(--botw-text-muted)',
-                    }}
-                  >
-                    ⏳ 过期: {item.expiry_date}{' '}
-                    {isExpired(item.expiry_date)
-                      ? '(已过期)'
-                      : isNearExpiry(item.expiry_date)
-                        ? '(即将过期)'
-                        : ''}
-                  </div>
-                )}
-              </div>
             </div>
           );
         })}
@@ -598,6 +505,86 @@ export default function HomePage() {
           <Spin />
         </div>
       )}
+
+      <Modal
+        open={detailVisible}
+        title={null}
+        onCancel={() => setDetailVisible(false)}
+        footer={null}
+        width={520}
+        loading={detailLoading}
+        centered
+      >
+        {detailItem && (
+          <div style={{ maxWidth: 480, margin: '0 auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 16, alignItems: 'start' }}>
+              {detailItem.image_url && (
+                <Image
+                  src={detailItem.image_url}
+                  alt={detailItem.name}
+                  style={{
+                    width: '100%',
+                    aspectRatio: '1 / 1',
+                    objectFit: 'cover',
+                    borderRadius: 12,
+                  }}
+                />
+              )}
+              <div style={{ display: 'grid', gap: 8 }}>
+                <div style={{ fontWeight: 'bold', fontSize: 16 }}>{detailItem.name}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px' }}>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>分类</span>
+                    <div style={{ fontSize: 13 }}>{detailItem.category?.name || '-'}</div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>价格</span>
+                    <div style={{ fontSize: 13, color: 'var(--botw-gold)', fontWeight: 'bold' }}>
+                      ¥{detailItem.price?.toLocaleString()}
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>状态</span>
+                    <div style={{ fontSize: 13 }}>{detailItem.status}</div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>来源</span>
+                    <div style={{ fontSize: 13 }}>{detailItem.source || '-'}</div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>购入日期</span>
+                    <div style={{ fontSize: 13 }}>{detailItem.purchase_date ? dayjs(detailItem.purchase_date).format('YYYY-MM-DD') : '-'}</div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>过期日期</span>
+                    <div style={{ fontSize: 13 }}>{detailItem.expiry_date ? dayjs(detailItem.expiry_date).format('YYYY-MM-DD') : '-'}</div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>位置</span>
+                    <div style={{ fontSize: 13 }}>{detailItem.location || '-'}</div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>标签</span>
+                    <div style={{ fontSize: 13 }}>
+                      {detailItem.tags?.length
+                        ? detailItem.tags.map((t) => <Tag key={t.id} style={{ fontSize: 11, padding: '0 6px', margin: 0 }}>{t.name}</Tag>)
+                        : '-'}
+                    </div>
+                  </div>
+                </div>
+                {detailItem.description && (
+                  <div>
+                    <span style={{ color: 'var(--botw-text-muted)', fontSize: 11 }}>描述</span>
+                    <div style={{ marginTop: 2, padding: 6, background: 'var(--botw-bg)', borderRadius: 6, fontSize: 12 }}>
+                      {detailItem.description}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

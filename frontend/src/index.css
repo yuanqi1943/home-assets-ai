@@ -275,3 +275,16 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--botw-gold);
 }
+
+/* 首页物品卡片网格响应式 */
+.home-item-grid {
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 6px !important;
+}
+
+@media (min-width: 1024px) {
+  .home-item-grid {
+    grid-template-columns: repeat(8, 1fr) !important;
+    gap: 10px !important;
+  }
+}

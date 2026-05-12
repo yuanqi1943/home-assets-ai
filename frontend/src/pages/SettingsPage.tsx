@@ -4,8 +4,10 @@ import {
 } from 'antd';
 import {
   ExportOutlined, PlusOutlined, EditOutlined, DeleteOutlined,
+  AppstoreAddOutlined,
 } from '@ant-design/icons';
 import { api } from '../api';
+import BatchAddModal from './BatchAddModal';
 // import { useStore } from '../store';
 
 interface Category {
@@ -30,6 +32,7 @@ export default function SettingsPage() {
   const [tagModalVisible, setTagModalVisible] = useState(false);
   const [tagEditing, setTagEditing] = useState<TagType | null>(null);
   const [pwdModalVisible, setPwdModalVisible] = useState(false);
+  const [batchModalVisible, setBatchModalVisible] = useState(false);
   const [catForm] = Form.useForm();
   const [tagForm] = Form.useForm();
   const [pwdForm] = Form.useForm();
@@ -212,6 +215,19 @@ export default function SettingsPage() {
           导出为 CSV
         </Button>
       </Card>
+
+      <Card title="批量添加" size="small">
+        <Button icon={<AppstoreAddOutlined />} onClick={() => setBatchModalVisible(true)}>
+          批量添加物品
+        </Button>
+      </Card>
+
+      <BatchAddModal
+        open={batchModalVisible}
+        onClose={() => setBatchModalVisible(false)}
+        categories={categories}
+        onSuccess={fetchData}
+      />
 
       <Divider />
       {/* <Button danger block onClick={() => { logout(); window.location.href = '/login'; }}>

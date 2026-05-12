@@ -9,11 +9,11 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://192.168.50.51:3002',
+        target: 'http://localhost:3002',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://192.168.50.51:3002',
+        target: 'http://localhost:3002',
         changeOrigin: true,
       },
     },

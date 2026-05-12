@@ -187,6 +187,15 @@ export class ItemsService {
     return { success: true };
   }
 
+  async batchCreate(userId: number, payloads: Array<{ dto: any; imageUrl?: string }>) {
+    let count = 0;
+    for (const { dto, imageUrl } of payloads) {
+      await this.create(userId, dto, imageUrl);
+      count++;
+    }
+    return { success: true, count };
+  }
+
   private mapItem(item: Item) {
     return {
       ...item,

@@ -5,6 +5,7 @@ import {
 } from 'antd';
 import { UploadOutlined, ScanOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { api } from '../api';
+import { compressImage } from '../utils/compressImage';
 import dayjs from 'dayjs';
 
 interface Category {
@@ -48,73 +49,11 @@ export default function ItemFormPage() {
     }
   }, [id, form]);
 
-  const compressImage = async (file: File, maxSizeKB = 200): Promise<File> => {
-    const maxBytes = maxSizeKB * 1024;
-    if (file.size <= maxBytes) return file;
-
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        let { width, height } = img;
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('无法创建 canvas 上下文'));
-          return;
-        }
-
-        const tryCompress = (quality: number) => {
-          canvas.width = width;
-          canvas.height = height;
-          ctx.clearRect(0, 0, width, height);
-          ctx.drawImage(img, 0, 0, width, height);
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error('图片压缩失败'));
-                return;
-              }
-              if (blob.size <= maxBytes || quality <= 0.1) {
-                const compressedFile = new File([blob], file.name, {
-                  type: 'image/jpeg',
-                  lastModified: Date.now(),
-                });
-                resolve(compressedFile);
-              } else {
-                // 降低质量重试
-                tryCompress(quality - 0.1);
-              }
-            },
-            'image/jpeg',
-            quality
-          );
-        };
-
-        // 如果尺寸过大，先等比缩小
-        const maxDimension = 1920;
-        if (width > maxDimension || height > maxDimension) {
-          const ratio = Math.min(maxDimension / width, maxDimension / height);
-          width = Math.round(width * ratio);
-          height = Math.round(height * ratio);
-        }
-
-        tryCompress(0.9);
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error('图片加载失败'));
-      };
-      img.src = url;
-    });
-  };
-
   const handleImageChange = async (info: any) => {
     if (info.fileList.length > 0) {
       const rawFile = info.fileList[0].originFileObj as File;
       try {
-        const file = await compressImage(rawFile, 200);
+        const file = await compressImage(rawFile, 100);
         setImageFile(file);
         setImagePreview(URL.createObjectURL(file));
       } catch {
@@ -132,7 +71,7 @@ export default function ItemFormPage() {
     const rawFile = e.target.files?.[0];
     if (!rawFile) return;
     try {
-      const file = await compressImage(rawFile, 200);
+      const file = await compressImage(rawFile, 100);
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
       message.success('拍照成功');

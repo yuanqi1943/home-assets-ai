@@ -11,9 +11,10 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles,
   ParseIntPipe,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, AnyFilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { ItemsService } from './items.service';
@@ -122,5 +123,38 @@ export class ItemsController {
     @Body('tagIds') tagIds: number[],
   ) {
     return this.service.batchUpdateTags(req.user.userId, ids, tagIds);
+  }
+
+  @Post('batch-create')
+  @UseInterceptors(
+    AnyFilesInterceptor({
+      storage: diskStorage({
+        destination: uploadsDir,
+        filename: (req, file, cb) => {
+          const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, unique + extname(file.originalname));
+        },
+      }),
+    }),
+  )
+  async batchCreate(
+    @Request() req,
+    @Body('items') itemsJson: string,
+    @UploadedFiles() files: Array<Express.Multer.File>,
+  ) {
+    const items: Array<{ imageIndex?: number; [key: string]: any }> = JSON.parse(itemsJson);
+    const fileMap = new Map<number, Express.Multer.File>();
+    files.forEach((file, idx) => {
+      fileMap.set(idx, file);
+    });
+
+    const payloads = items.map((item, idx) => {
+      const file = fileMap.get(idx);
+      const imageUrl = file ? `/uploads/${file.filename}` : undefined;
+      const { imageIndex, ...dto } = item;
+      return { dto, imageUrl };
+    });
+
+    return this.service.batchCreate(req.user.userId, payloads);
   }
 }

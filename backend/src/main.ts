@@ -27,6 +27,6 @@ async function bootstrap() {
 
   await app.listen(3002, '0.0.0.0');
   console.log('Server running on http://localhost:3002');
-  console.log('LAN access: http://192.168.50.51:3002');
+  console.log('LAN access: http://192.168.0.121:3002');
 }
 bootstrap();

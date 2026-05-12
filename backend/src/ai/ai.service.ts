@@ -84,6 +84,7 @@ Rules:
         categoryName: '其他',
         categoryId: null,
         description: '',
+        price: 0,
       };
     }
   }

@@ -10,7 +10,7 @@ import ItemFormPage from './pages/ItemFormPage';
 
 function App() {
   const token = useStore((s) => s.token);
-
+  console.log(token);
   return (
     <Routes>
       <Route path="/login" element={token ? <Navigate to="/" /> : <LoginPage />} />
